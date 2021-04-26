@@ -36,4 +36,5 @@ pip3 install aiogram netschoolapi bs4
 
 Ответственности за бота никто не несёт. Всё на ваш страх и риск. 
 
-MIT License  
+GNU GPL v3.0
+

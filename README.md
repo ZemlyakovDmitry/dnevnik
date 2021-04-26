@@ -14,8 +14,11 @@
 1. Установить либы
 pip3 install aiogram netschoolapi bs4
 
+
 2. В либе netschoolapi изменить файл client.py:
-Строка 53: eturn data.Diary.from_dict(dairy) > return dairy 
+
+Строка 53: return data.Diary.from_dict(dairy) > return dairy 
+
 
 3. Изменить файл dnevnik_bot.py:
 В строку 16 вставить токен тг бота вместо TOKEN (Получать у t.me/BotFather) 

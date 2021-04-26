@@ -35,3 +35,5 @@ pip3 install aiogram netschoolapi bs4
 4. Запуск: python3 dnevnik_bot.py
 
 Ответственности за бота никто не несёт. Всё на ваш страх и риск. 
+
+MIT License  

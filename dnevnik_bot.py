@@ -5,15 +5,15 @@ from netschoolapi import NetSchoolAPI
 import pickle
 import random
 import re
+import sys
 import datetime
 import time
 from bs4 import BeautifulSoup
 from keyboard import keyboard_menu, keyboard_shpora
 from data import User, Account
-from threading import Thread
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token='')
+bot = Bot(token='TOKEN')
 dp = Dispatcher(bot)
 
 try:
@@ -39,21 +39,14 @@ async def _(message: types.Message):
         for account in user.accounts:
             keyboard.add(InlineKeyboardButton(account_dict[account].login + ' ' + account_dict[account].dnevnik, callback_data=account))
         keyboard.add(InlineKeyboardButton('Новый аккаунт', callback_data='new_account'))
-        await message.reply('Привет!\nНужно выбрать аккаунт или создать новый', reply_markup=keyboard)
+        await message.reply('Привет!\nНужно выбрать аккаунт или создать новый.', reply_markup=keyboard)
     except Exception as e:
         user_dict[message.from_user.id] = User(message.from_user.id)
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton('Новый аккаунт', callback_data='new_account'))
-        await message.reply('Отлично!\nНужно создать аккаунт', reply_markup = keyboard)
+        await message.reply('Отлично!\nНужно создать аккаунт. :)', reply_markup = keyboard)
 
 @dp.callback_query_handler(text='new_account')
-async def _(message: types.CallbackQuery):
-    await bot.answer_callback_query(message.id)
-    keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton('Сетевой город', callback_data='sgo'))
-    await bot.send_message(message.from_user.id, 'Выбери свой дневник по кнопке ниже', reply_markup = keyboard)
-
-@dp.callback_query_handler(text='sgo')
 async def _(message: types.CallbackQuery):
     await bot.answer_callback_query(message.id)
     user = user_dict[message.from_user.id]
@@ -61,14 +54,9 @@ async def _(message: types.CallbackQuery):
     account_dict[id] = Account(id)
     user.accounts.append(id)
     account_dict[id].dnevnik = 'Сетевой город'
-    user.logic = 'url'
+    user.logic = 'login'
     user.account_id = id
-    await bot.send_message(message.from_user.id, 'Теперь введите адрес(ссылку) своего дневника', reply_markup = keyboard_shpora)
-
-@dp.callback_query_handler(text='shpora')
-async def _(message: types.CallbackQuery):
-    await bot.answer_callback_query(message.id)
-    await bot.send_photo(message.from_user.id, open('shpora.jpg', 'rb'), caption='Данные которые нужно вводить при создании аккаунта')
+    await bot.send_message(message.from_user.id, 'Введи логин и пароль через пробел.\nПример: ВасяПупкин ПарольВаси')
 
 @dp.message_handler(commands=['menu'])
 async def _(message: types.Message):
@@ -94,9 +82,8 @@ async def _(message: types.CallbackQuery):
     tommorow = InlineKeyboardButton('Завтра', callback_data='tomorrow')
     today = InlineKeyboardButton('Сегодня', callback_data='today')
     yesterday = InlineKeyboardButton('Вчера', callback_data='yesterday')
-    week = InlineKeyboardButton('На неделю', callback_data='week')
     back = InlineKeyboardButton('Назад', callback_data='back')
-    keyboard.row(tommorow, today, yesterday).add(week).row(back)
+    keyboard.row(tommorow, today, yesterday).row(back)
     await bot.send_message(message.from_user.id, 'Выбери дату за которую нужно предоставить расписание', reply_markup=keyboard)
 
 @dp.callback_query_handler(text='dz')
@@ -108,9 +95,8 @@ async def _(message: types.CallbackQuery):
     tommorow = InlineKeyboardButton('Завтра', callback_data='tomorrow')
     today = InlineKeyboardButton('Сегодня', callback_data='today')
     yesterday = InlineKeyboardButton('Вчера', callback_data='yesterday')
-    week = InlineKeyboardButton('На неделю', callback_data='week')
     back = InlineKeyboardButton('Назад', callback_data='back')
-    keyboard.row(tommorow, today, yesterday).add(week).row(back)
+    keyboard.row(tommorow, today, yesterday).row(back)
     await bot.send_message(message.from_user.id, 'Выбери дату за которую нужно предоставить домашнее задание', reply_markup=keyboard)
 
 @dp.callback_query_handler(text='ball')
@@ -120,7 +106,6 @@ async def _(message: types.CallbackQuery):
     user.logic = 'ball'
     keyboard = InlineKeyboardMarkup()
     keyboard.row(InlineKeyboardButton('Сегодня', callback_data='today'), InlineKeyboardButton('Вчера', callback_data='yesterday'))
-    keyboard.row(InlineKeyboardButton('Неделя', callback_data='week'))
     keyboard.add(InlineKeyboardButton('Назад', callback_data='back'))
     await bot.send_message(message.from_user.id, 'Выбери дату за которую нужно предоставить оценку', reply_markup=keyboard)
 
@@ -323,31 +308,7 @@ async def _(message: types.CallbackQuery):
 async def _(message: types.Message):
     try:
         user = user_dict[message.from_user.id]
-        if user.logic == 'url':
-            account_dict[user.account_id].url = message.text
-            user.logic = 'oblast'
-            await bot.send_message(message.from_user.id, 'Введите регион с сайта\nВажно!Вводите слово в слово, букву в букву как на сайте', reply_markup = keyboard_shpora)
-        elif user.logic == 'oblast':
-            account_dict[user.account_id].oblast = message.text
-            user.logic = 'okrug'
-            await bot.send_message(message.from_user.id, 'Введите городской округ с сайта\nВажно!Вводите слово в слово, букву в букву как на сайте\nЕсли на сайте нету, то вводите "Городской округ + ваш_город", пример: "Городской округ Екатеринбург"', reply_markup = keyboard_shpora)
-        elif user.logic == 'okrug':
-            account_dict[user.account_id].okrug = message.text
-            user.logic = 'sity'
-            await bot.send_message(message.from_user.id, 'Введите город с сайта\nВажно!Вводите слово в слово, букву в букву как на сайте', reply_markup = keyboard_shpora)
-        elif user.logic == 'sity':
-            account_dict[user.account_id].sity = message.text
-            user.logic = 'type'
-            await bot.send_message(message.from_user.id, 'Введите тип школы с сайта\nВажно!Вводите слово в слово, букву в букву как на сайте\nЕсли на сайте, то найдите вашу школу ', reply_markup = keyboard_shpora)
-        elif user.logic == 'type':
-            account_dict[user.account_id].type = message.text
-            user.logic = 'school'
-            await bot.send_message(message.from_user.id, 'Введите школу с сайта\nВажно!Вводите слово в слово, букву в букву как на сайте', reply_markup = keyboard_shpora)
-        elif user.logic == 'school':
-            account_dict[user.account_id].school = message.text
-            user.logic = 'login'
-            await bot.send_message(message.from_user.id, 'Введите логин и пароль через пробел\nПример: ВасяПупкин с3кр37НыЙП4Р0Ль', reply_markup = keyboard_shpora)
-        elif user.logic == 'login':
+        if user.logic == 'login':
             reg_ex = re.search('(.*) (.*)', message.text)
             if reg_ex:
                 account_dict[user.account_id].login = reg_ex.group(1)
@@ -355,6 +316,12 @@ async def _(message: types.Message):
                 user.logic = None
                 try:
                     account = account_dict[user.account_id]
+                    account_dict[user.account_id].url = 'ССЫЛКА НА САЙТ ДНЕВНИКА'
+                    account_dict[user.account_id].oblast = 'Регион'
+                    account_dict[user.account_id].okrug = 'Городской округ / Муниципальный район'
+                    account_dict[user.account_id].sity = 'Населённый пункт'
+                    account_dict[user.account_id].type = 'Тип ОО'
+                    account_dict[user.account_id].school = 'Образовательная организация"'
                     async with NetSchoolAPI(account.url,account.login,account.password,(account.oblast, account.okrug, account.sity, account.type, account.school)) as api:
                         diary = await api.get_diary(week_start=datetime.date.today(), week_end=datetime.date.today())
                     user.account_id = None
@@ -383,16 +350,14 @@ async def _(message: types.CallbackQuery):
         pass
     await bot.send_message(message.from_user.id, 'Выбирай', reply_markup = keyboard_menu)
 
-def save_user_date():
-    while True:
-        with open('user.pkl', 'wb') as f:
-            pickle.dump(user_dict, f)
-        with open('account.pkl', 'wb') as f:
-            pickle.dump(account_dict, f)
-        print("\n"+str(datetime.datetime.today().strftime("%H:%M:%S"))+" Выполнил сохранение!\n")
-        time.sleep(300)
-
-th = Thread(target=save_user_date, args=())
-th.start()
-
-executor.start_polling(dp, skip_updates=True)
+try:
+    executor.start_polling(dp, skip_updates=True)
+except KeyboardInterrupt:
+    with open('user.pkl', 'wb') as f:
+        pickle.dump(user_dict, f)
+    with open('account.pkl', 'wb') as f:
+        pickle.dump(account_dict, f)
+    print("\nВыполнил сохранение!\n")
+    sys.exit()
+    
+# Made with love by FSB

@@ -20,6 +20,7 @@ pip3 install aiogram netschoolapi bs4
 3. Изменить файл dnevnik_bot.py:
 В строку 16 вставить токен тг бота вместо TOKEN (Получать у t.me/BotFather) 
 В строках 319 - 324 изменить следующее: 
+
                     account_dict[user.account_id].url = 'ССЫЛКА НА САЙТ ДНЕВНИКА'
                     account_dict[user.account_id].oblast = 'Регион'
                     account_dict[user.account_id].okrug = 'Городской округ / Муниципальный район'

@@ -39,12 +39,12 @@ async def _(message: types.Message):
         for account in user.accounts:
             keyboard.add(InlineKeyboardButton(account_dict[account].login + ' ' + account_dict[account].dnevnik, callback_data=account))
         keyboard.add(InlineKeyboardButton('Новый аккаунт', callback_data='new_account'))
-        await message.reply('Привет!\nНужно выбрать аккаунт или создать новый.', reply_markup=keyboard)
+        await message.reply('Привет!\nНужно выбрать аккаунт или создать новый', reply_markup=keyboard)
     except Exception as e:
         user_dict[message.from_user.id] = User(message.from_user.id)
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton('Новый аккаунт', callback_data='new_account'))
-        await message.reply('Отлично!\nНужно создать аккаунт. :)', reply_markup = keyboard)
+        await message.reply('Отлично!\nНужно создать аккаунт', reply_markup = keyboard)
 
 @dp.callback_query_handler(text='new_account')
 async def _(message: types.CallbackQuery):
@@ -57,6 +57,11 @@ async def _(message: types.CallbackQuery):
     user.logic = 'login'
     user.account_id = id
     await bot.send_message(message.from_user.id, 'Введи логин и пароль через пробел.\nПример: ВасяПупкин ПарольВаси')
+
+@dp.callback_query_handler(text='shpora')
+async def _(message: types.CallbackQuery):
+    await bot.answer_callback_query(message.id)
+    await bot.send_photo(message.from_user.id, open('shpora.jpg', 'rb'), caption='Данные которые нужно вводить при создании аккаунта')
 
 @dp.message_handler(commands=['menu'])
 async def _(message: types.Message):
@@ -82,8 +87,9 @@ async def _(message: types.CallbackQuery):
     tommorow = InlineKeyboardButton('Завтра', callback_data='tomorrow')
     today = InlineKeyboardButton('Сегодня', callback_data='today')
     yesterday = InlineKeyboardButton('Вчера', callback_data='yesterday')
+    week = InlineKeyboardButton('На неделю', callback_data='week')
     back = InlineKeyboardButton('Назад', callback_data='back')
-    keyboard.row(tommorow, today, yesterday).row(back)
+    keyboard.row(tommorow, today, yesterday).add(week).row(back)
     await bot.send_message(message.from_user.id, 'Выбери дату за которую нужно предоставить расписание', reply_markup=keyboard)
 
 @dp.callback_query_handler(text='dz')
@@ -95,8 +101,9 @@ async def _(message: types.CallbackQuery):
     tommorow = InlineKeyboardButton('Завтра', callback_data='tomorrow')
     today = InlineKeyboardButton('Сегодня', callback_data='today')
     yesterday = InlineKeyboardButton('Вчера', callback_data='yesterday')
+    week = InlineKeyboardButton('На неделю', callback_data='week')
     back = InlineKeyboardButton('Назад', callback_data='back')
-    keyboard.row(tommorow, today, yesterday).row(back)
+    keyboard.row(tommorow, today, yesterday).add(week).row(back)
     await bot.send_message(message.from_user.id, 'Выбери дату за которую нужно предоставить домашнее задание', reply_markup=keyboard)
 
 @dp.callback_query_handler(text='ball')
@@ -106,6 +113,7 @@ async def _(message: types.CallbackQuery):
     user.logic = 'ball'
     keyboard = InlineKeyboardMarkup()
     keyboard.row(InlineKeyboardButton('Сегодня', callback_data='today'), InlineKeyboardButton('Вчера', callback_data='yesterday'))
+    keyboard.row(InlineKeyboardButton('Неделя', callback_data='week'))
     keyboard.add(InlineKeyboardButton('Назад', callback_data='back'))
     await bot.send_message(message.from_user.id, 'Выбери дату за которую нужно предоставить оценку', reply_markup=keyboard)
 
@@ -238,13 +246,13 @@ async def _(message: types.CallbackQuery):
         diary = await api.get_diary()
     if user.logic == 'rasp':
         for day in diary['weekDays']:
-            reg_ex = re.search('(.*)-(.*)-).*)T00:00:00', day['date'])
+            reg_ex = re.search('(.*)-(.*)-(.*)T00:00:00', day['date'])
             result += '\n\nДень: ' + reg_ex.group(2) + '-' + reg_ex.group(3)
             for lesson in day['lessons']:
                 result += '\n' + str(lesson['number'])+'.'+str(lesson['subjectName']) + '(' + str(lesson['startTime']) + '-' + str(lesson['endTime']) + ')'
     elif user.logic == 'dz':
         for day in diary['weekDays']:
-            reg_ex = re.search('(.*)-(.*)-).*)T00:00:00', day['date'])
+            reg_ex = re.search('(.*)-(.*)-(.*)T00:00:00', day['date'])
             result += '\n\nДень: ' + reg_ex.group(2) + '-' + reg_ex.group(3)
             for lesson in day['lessons']:
                 try:
@@ -254,7 +262,7 @@ async def _(message: types.CallbackQuery):
     elif user.logic == 'ball':
         ball = {}
         for day in diary['weekDays']:
-            reg_ex = re.search('(.*)-(.*)-).*)T00:00:00', day['date'])
+            reg_ex = re.search('(.*)-(.*)-(.*)T00:00:00', day['date'])
             result += '\n\nДень: ' + reg_ex.group(2) + '-' + reg_ex.group(3)
             for lesson in day['lessons']:
                 try:
@@ -360,4 +368,4 @@ except KeyboardInterrupt:
     print("\nВыполнил сохранение!\n")
     sys.exit()
     
-# Made with love by FSB
+# Made with <3 by FSB
